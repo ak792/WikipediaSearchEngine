@@ -17,7 +17,7 @@ public class PostingsListFactory {
         final PostingsList postingsList;
         switch (postingsListType) {
             case DynamicArray:
-                postingsList = new DynamicArrayPostingsList();
+                postingsList = new DynamicArrayPositionalPostingsList();
                 break;
 
             default:

@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class HashDictionary implements Dictionary {
 
     private final Map<String, PostingsList> termsToPostingsLists;
+
     private final Set<String> stopWords;
     private final PostingsListFactory postingsListFactory;
 
@@ -23,36 +24,6 @@ public class HashDictionary implements Dictionary {
         this.termsToPostingsLists = new HashMap<>();
         this.stopWords = stopWords;
         this.postingsListFactory = new PostingsListFactory(postingsListType);
-    }
-
-    public static class Builder {
-
-        private Set<String> stopWords;
-        private PostingsListFactory.PostingsListType postingsListType;
-
-        private Builder() {
-            //Initialize defaults
-            stopWords = new HashSet<>();
-            postingsListType = PostingsListFactory.PostingsListType.DynamicArray;
-        }
-
-        public static Builder builder() {
-            return new Builder();
-        }
-
-        public Builder withStopWords(final Set<String> stopWords) {
-            this.stopWords = stopWords;
-            return this;
-        }
-
-        public Builder withPostingsListType(final PostingsListFactory.PostingsListType postingsListType) {
-            this.postingsListType = postingsListType;
-            return this;
-        }
-
-        public Dictionary build() {
-            return new HashDictionary(stopWords, postingsListType);
-        }
     }
 
     @Override
@@ -91,7 +62,6 @@ public class HashDictionary implements Dictionary {
         validateNotStopWord(term);
 
         final String normalizedTerm = normalizeTerm(term);
-
         termsToPostingsLists.put(normalizedTerm, postingsList);
     }
 
@@ -103,50 +73,24 @@ public class HashDictionary implements Dictionary {
     }
 
     private void validateNotStopWord(final String term) {
-        final String normalizedTerm = normalizeTerm(term);
-
         if (isStopWord(term)) {
             throw new StopWordException(String.format("Term %s is a stop word", term));
         }
     }
 
     @Override
-    public int size() {
+    public int numTerms() {
         return termsToPostingsLists.size();
-    }
-
-    @Override
-    public int findMaxPostingsListSize() {
-        final Optional<Integer> maxPostingsListSizeOptional = termsToPostingsLists.keySet()
-                                                                                  .stream()
-                                                                                  .map(termsToPostingsLists::get)
-                                                                                  .map(PostingsList::size)
-                                                                                  .max(Comparator.naturalOrder());
-
-        //if there are no terms in the dictionary, default to a max size of 0
-        return maxPostingsListSizeOptional.orElse(0);
-    }
-
-    @Override
-    public int findMinPostingsListSize() {
-        final Optional<Integer> maxPostingsListSizeOptional = termsToPostingsLists.keySet()
-                .stream()
-                .map(termsToPostingsLists::get)
-                .map(PostingsList::size)
-                .min(Comparator.naturalOrder());
-
-        //if there are no terms in the dictionary, default to a max size of 0
-        return maxPostingsListSizeOptional.orElse(0);
     }
 
     //Returns each term and its postings in alphabetical order
     @Override
-    public String getAllContents() {
-        return getAllContents(Comparator.naturalOrder());
+    public String toString() {
+        return toString(Comparator.naturalOrder());
     }
 
     @Override
-    public String getAllContents(final Comparator<String> comparator) {
+    public String toString(final Comparator<String> comparator) {
         final List<String> entries = termsToPostingsLists.entrySet().stream()
                 .map(entry -> String.format("%s: %s", entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
@@ -164,4 +108,34 @@ public class HashDictionary implements Dictionary {
         return term.toLowerCase(Locale.ENGLISH);
     }
 
+
+    public static class Builder {
+
+        private Set<String> stopWords;
+        private PostingsListFactory.PostingsListType postingsListType;
+
+        private Builder() {
+            //Initialize defaults
+            stopWords = new HashSet<>();
+            postingsListType = PostingsListFactory.PostingsListType.DynamicArray;
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public Builder withStopWords(final Set<String> stopWords) {
+            this.stopWords = stopWords;
+            return this;
+        }
+
+        public Builder withPostingsListType(final PostingsListFactory.PostingsListType postingsListType) {
+            this.postingsListType = postingsListType;
+            return this;
+        }
+
+        public Dictionary build() {
+            return new HashDictionary(stopWords, postingsListType);
+        }
+    }
 }

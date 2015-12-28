@@ -9,12 +9,8 @@ public interface Dictionary {
     PostingsList getOrCreatePostingsList(String term);
     void setPostingsList(String term, PostingsList postingsList);
     boolean isStopWord(String term);
-    int size();
+    int numTerms();
 
-    int findMaxPostingsListSize();
-    int findMinPostingsListSize();
-
-    String getAllContents();
-    String getAllContents(Comparator<String> comparator);
-
+    String toString();
+    String toString(Comparator<String> comparator);
 }

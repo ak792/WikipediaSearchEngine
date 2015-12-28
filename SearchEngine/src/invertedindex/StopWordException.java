@@ -14,7 +14,6 @@ public class StopWordException extends RuntimeException {
         super(throwable);
     }
 
-
     public StopWordException(final String message, final Throwable throwable) {
         super(message, throwable);
     }
