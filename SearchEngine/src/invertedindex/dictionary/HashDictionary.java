@@ -1,14 +1,17 @@
-package invertedindex;
+package invertedindex.dictionary;
 
 import com.google.common.base.Joiner;
+import invertedindex.postingslist.PostingsList;
+import invertedindex.postingslist.PostingsListFactory;
+import invertedindex.StopWordException;
+import invertedindex.invertedindex.TermNormalizer;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,23 +22,30 @@ public class HashDictionary implements Dictionary {
 
     private final Set<String> stopWords;
     private final PostingsListFactory postingsListFactory;
+    private final TermNormalizer termNormalizer;
 
-    private HashDictionary(final Set<String> stopWords, final PostingsListFactory.PostingsListType postingsListType) {
+    private HashDictionary(final Set<String> stopWords, final PostingsListFactory.PostingsListType postingsListType, final TermNormalizer termNormalizer) {
         this.termsToPostingsLists = new HashMap<>();
         this.stopWords = stopWords;
         this.postingsListFactory = new PostingsListFactory(postingsListType);
+        this.termNormalizer = termNormalizer;
     }
 
     @Override
     public boolean hasPostingsList(final String term) {
-        final String normalizedTerm = normalizeTerm(term);
+        final String normalizedTerm = termNormalizer.normalizeTerm(term);
 
-        return getPostingsList(normalizedTerm) != null;
+        return termsToPostingsLists.containsKey(normalizedTerm);
     }
 
     @Override
     public PostingsList getPostingsList(final String term) {
-        final String normalizedTerm = normalizeTerm(term);
+        final String normalizedTerm = termNormalizer.normalizeTerm(term);
+
+
+        if (!hasPostingsList(term)) {
+            throw new NoSuchElementException("No postings list found for " + term);
+        }
 
         return termsToPostingsLists.get(normalizedTerm);
     }
@@ -48,26 +58,15 @@ public class HashDictionary implements Dictionary {
     public PostingsList getOrCreatePostingsList(final String term) {
         validateNotStopWord(term);
 
-        final String normalizedTerm = normalizeTerm(term);
+        final String normalizedTerm = termNormalizer.normalizeTerm(term);
 
         termsToPostingsLists.putIfAbsent(normalizedTerm, postingsListFactory.getInstance());
         return termsToPostingsLists.get(normalizedTerm);
     }
 
-    /**
-     * @throws StopWordException if term is a stop word
-     */
-    @Override
-    public void setPostingsList(final String term, final PostingsList postingsList) {
-        validateNotStopWord(term);
-
-        final String normalizedTerm = normalizeTerm(term);
-        termsToPostingsLists.put(normalizedTerm, postingsList);
-    }
-
     @Override
     public boolean isStopWord(final String term) {
-        final String normalizedTerm = normalizeTerm(term);
+        final String normalizedTerm = termNormalizer.normalizeTerm(term);
 
         return stopWords.contains(normalizedTerm);
     }
@@ -79,8 +78,8 @@ public class HashDictionary implements Dictionary {
     }
 
     @Override
-    public int numTerms() {
-        return termsToPostingsLists.size();
+    public int getTermFrequency(final String term, final int documentId) {
+        return hasPostingsList(term) ? getPostingsList(term).getTermFrequency(documentId) : 0;
     }
 
     //Returns each term and its postings in alphabetical order
@@ -99,25 +98,18 @@ public class HashDictionary implements Dictionary {
         return Joiner.on("\n").join(entries);
     }
 
-    private String normalizeTerm(final String term) {
-        //Normalize words to lower case
-        //Note: While this will help in many cases (such as considering a word at the beginning of the sentence
-        //the same as if it were in the middle), this can hurt in others (for example, an acronym that spells a word
-        //will be considered the same as the word
-
-        return term.toLowerCase(Locale.ENGLISH);
-    }
-
-
     public static class Builder {
 
         private Set<String> stopWords;
         private PostingsListFactory.PostingsListType postingsListType;
+        private TermNormalizer termNormalizer;
+
 
         private Builder() {
             //Initialize defaults
             stopWords = new HashSet<>();
             postingsListType = PostingsListFactory.PostingsListType.DynamicArray;
+            termNormalizer = new TermNormalizer();
         }
 
         public static Builder builder() {
@@ -134,8 +126,13 @@ public class HashDictionary implements Dictionary {
             return this;
         }
 
+        public Builder withTermNormalizer(final TermNormalizer termNormalizer) {
+            this.termNormalizer = termNormalizer;
+            return this;
+        }
+
         public Dictionary build() {
-            return new HashDictionary(stopWords, postingsListType);
+            return new HashDictionary(stopWords, postingsListType, termNormalizer);
         }
     }
 }

@@ -1,7 +1,6 @@
-package invertedindex;
+package invertedindex.postingslist;
 
 import com.google.common.base.Joiner;
-import com.sun.javadoc.Doc;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public class DynamicArrayDocumentPosting implements DocumentPosting {
-
 
     private final int documentId;
     private final List<Integer> positions;
@@ -38,7 +36,7 @@ public class DynamicArrayDocumentPosting implements DocumentPosting {
     }
 
     @Override
-    public int size() {
+    public int getNumPositions() {
         return positions.size();
     }
 

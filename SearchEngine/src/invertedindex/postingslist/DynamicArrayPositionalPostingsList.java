@@ -1,4 +1,4 @@
-package invertedindex;
+package invertedindex.postingslist;
 
 import com.google.common.base.Joiner;
 
@@ -30,9 +30,22 @@ public class DynamicArrayPositionalPostingsList implements PostingsList {
     }
 
     @Override
-    public int numDocuments() {
+    public int getTermFrequency(final int documentId) {
+        return getDocumentById(documentId).map(DocumentPosting::getNumPositions)
+                                          .orElse(0);
+    }
+
+    private Optional<DocumentPosting> getDocumentById(final int documentId) {
+        return documentPostings.stream()
+                        .filter(documentPosting -> documentPosting.getDocumentId() == documentId)
+                        .findAny();
+    }
+
+    @Override
+    public int getNumDocuments() {
         return documentPostings.size();
     }
+
 
     @Override
     public List<DocumentPosting> getPostings() {
@@ -62,7 +75,7 @@ public class DynamicArrayPositionalPostingsList implements PostingsList {
         return getDocumentPostingOptional(documentId).orElseThrow(() -> new NoSuchElementException("No element with documentId " + documentId));
     }
 
-    public Optional<DocumentPosting> getDocumentPostingOptional(final int documentId) {
+    private Optional<DocumentPosting> getDocumentPostingOptional(final int documentId) {
         return documentPostings.stream()
                 .filter(currDocPosting -> currDocPosting.getDocumentId() == documentId)
                 .findAny();

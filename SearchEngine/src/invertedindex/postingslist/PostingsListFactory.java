@@ -1,4 +1,4 @@
-package invertedindex;
+package invertedindex.postingslist;
 
 public class PostingsListFactory {
 
