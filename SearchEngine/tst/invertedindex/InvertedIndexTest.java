@@ -1,7 +1,6 @@
 package invertedindex;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import invertedindex.dictionary.Dictionary;
 import invertedindex.invertedindex.Document;
@@ -15,7 +14,7 @@ import utils.TestUtils;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,10 +33,12 @@ public class InvertedIndexTest {
         final int testDocument1Id = 1;
         final String testDocument1 = "a the my fair lady is a fair pig";
         final String[] testTokens1 = {"a", "the", "my", "fair", "lady", "is", "a", "fair", "pig"};
+        final String[] testTerms1 = {"my", "fair", "lady", "fair", "pig"};
 
         final int testDocument2Id = 2;
         final String testDocument2 = "what a lovely lovely    table fair";
         final String[] testTokens2 = {"what", "a", "lovely", "lovely", "table", "fair"};
+        final String[] testTerms2 = {"what", "lovely", "lovely", "table", "fair"};
 
         //when
         invertedIndex.add(testDocument1Id, testDocument1);
@@ -97,26 +98,12 @@ public class InvertedIndexTest {
         Assert.assertEquals(tablePostingsList, termsToPostingsList.get("table"));
 
 
-
-        final int numDocs = 2;
-
-        final Document document1 = new Document(1, ImmutableMap.<String, Double>builder()
-                .put("lady", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("fair", TestUtils.calculateTfIdf(2, numDocs, 2))
-                .put("my", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("pig", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .build());
-
-        final Document document2 = new Document(2, ImmutableMap.<String, Double>builder()
-                .put("lovely", TestUtils.calculateTfIdf(2, numDocs, 1))
-                .put("what", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("fair", TestUtils.calculateTfIdf(1, numDocs, 2))
-                .put("table", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .build());
+        final Document document1 = new Document(1, Arrays.asList(testTerms1));
+        final Document document2 = new Document(2, Arrays.asList(testTerms2));
 
 
-        final Map<Document, Map<String, Double>> documents = TestUtils.getDocuments(invertedIndex);
-        for (final Document document : documents.keySet()) {
+        final Set<Document> documents = invertedIndex.getDocuments();
+        for (final Document document : documents) {
             if (document.getDocumentId() == document1.getDocumentId()) {
                 Assert.assertEquals(document1, document);
             } else if (document.getDocumentId() == document2.getDocumentId()) {
@@ -128,47 +115,37 @@ public class InvertedIndexTest {
     @Test
     public void test_invertedIndexCreation2() throws NoSuchFieldException, IllegalAccessException {
 
+        //given
+        final Set<String> stopWords = ImmutableSet.of("a", "the", "is");
         final InvertedIndex invertedIndex = InvertedIndex.Builder.builder()
                 .withDictionaryType(InvertedIndex.DictionaryType.Hash)
-                .withStopWords(new HashSet<>())
+                .withStopWords(stopWords)
                 .build();
 
-        invertedIndex.add(1, "a the my fair lady is a fair pig");
-        invertedIndex.add(2, "what a lovely lovely table fair");
-        invertedIndex.add(3, "isnt everything just a great pleasure");
+        final int testDocument1Id = 1;
+        final String testDocument1 = "a the my fair lady is a fair pig";
+        final String[] testTerms1 = {"my", "fair", "lady", "fair", "pig"};
 
-        final int numDocs = 3;
+        final int testDocument2Id = 2;
+        final String testDocument2 = "what a lovely lovely    table fair";
+        final String[] testTerms2 = {"what", "lovely", "lovely", "table", "fair"};
 
-        final Document document1 = new Document(1, ImmutableMap.<String, Double>builder()
-                .put("a", TestUtils.calculateTfIdf(2, numDocs, 3))
-                .put("the", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("my", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("fair", TestUtils.calculateTfIdf(2, numDocs, 2))
-                .put("lady", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("is", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("pig", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .build());
+        final int testDocument3Id = 3;
+        final String testDocument3 = "isnt everything just a great pleasure";
+        final String[] testTerms3 = {"isnt", "everything", "just", "great", "pleasure"};
 
-        final Document document2 = new Document(2, ImmutableMap.<String, Double>builder()
-                .put("what", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("a", TestUtils.calculateTfIdf(1, numDocs, 3))
-                .put("lovely", TestUtils.calculateTfIdf(2, numDocs, 1))
-                .put("table", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("fair", TestUtils.calculateTfIdf(1, numDocs, 2))
-                .build());
-
-        final Document document3 = new Document(2, ImmutableMap.<String, Double>builder()
-                .put("isnt", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("everything", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("just", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("a", TestUtils.calculateTfIdf(1, numDocs, 3))
-                .put("great", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .put("pleasure", TestUtils.calculateTfIdf(1, numDocs, 1))
-                .build());
+        //when
+        invertedIndex.add(testDocument1Id, testDocument1);
+        invertedIndex.add(testDocument2Id, testDocument2);
+        invertedIndex.add(testDocument3Id, testDocument3);
 
 
-        final Map<Document, Map<String, Double>> documents = TestUtils.getDocuments(invertedIndex);
-        for (final Document document : documents.keySet()) {
+        final Document document1 = new Document(1, Arrays.asList(testTerms1));
+        final Document document2 = new Document(2, Arrays.asList(testTerms2));
+        final Document document3 = new Document(2, Arrays.asList(testTerms3));
+
+        final Set<Document> documents = invertedIndex.getDocuments();
+        for (final Document document : documents) {
             if (document.getDocumentId() == document1.getDocumentId()) {
                 Assert.assertEquals(document1, document);
             } else if (document.getDocumentId() == document2.getDocumentId()) {
@@ -227,5 +204,7 @@ public class InvertedIndexTest {
         Assert.assertEquals(TestUtils.calculateTfIdf(2, numDocs, 1), invertedIndex.getTfIdf("lovely", 2), marginOfError);
         Assert.assertEquals(TestUtils.calculateTfIdf(0, numDocs, 0), invertedIndex.getTfIdf("notinanydocument", 2), marginOfError);
     }
+
+
 
 }

@@ -1,11 +1,15 @@
 package utils;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import invertedindex.dictionary.Dictionary;
 import invertedindex.invertedindex.Document;
 import invertedindex.invertedindex.InvertedIndex;
+import querier.similarity.DocumentSimilarityCalculator;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,14 +31,6 @@ public class TestUtils {
 
         return (Dictionary) dictionaryField.get(invertedIndex);
     }
-
-    public static Map<Document, Map<String, Double>> getDocuments(final InvertedIndex invertedIndex) throws NoSuchFieldException, IllegalAccessException {
-        final Field documentsField = invertedIndex.getClass().getDeclaredField("documents");
-        documentsField.setAccessible(true);
-
-        return (Map<Document, Map<String, Double>>) documentsField.get(invertedIndex);
-    }
-
 
     public static InvertedIndex constructInvertedIndex() {
         final Set<String> stopWords = ImmutableSet.of("a", "the", "is");
@@ -59,5 +55,49 @@ public class TestUtils {
 
     public static double calculateTfIdf(final int tf, final double numTotalDocs, final int numDocsTermIsIn) {
         return numDocsTermIsIn != 0 ? tf * Math.log(numTotalDocs / numDocsTermIsIn) : 0;
+    }
+
+    public static Document getLadyFairMyPigDocument(final int documentId) {
+        final Document document = new Document(documentId, ImmutableMap.<String, Set<Integer>>builder()
+                .put("lady", ImmutableSet.of(1))
+                .put("fair", ImmutableSet.of(2))
+                .put("my", ImmutableSet.of(3))
+                .put("pig", ImmutableSet.of(4))
+                .build());
+
+        return document;
+    }
+
+    public static Document getManFairMyPigDocument(final int documentId) {
+        final Document document = new Document(documentId, ImmutableMap.<String, Set<Integer>>builder()
+                .put("lady", ImmutableSet.of(1))
+                .put("fair", ImmutableSet.of(2))
+                .put("my", ImmutableSet.of(3))
+                .put("pig", ImmutableSet.of(4))
+                .build());
+
+        return document;
+    }
+
+
+    public static double invokeCalculateCosineSimilarity(final DocumentSimilarityCalculator documentSimilarityCalculator, final Document document1, final Document document2) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InvocationTargetException {
+        final Method calculateCosineSimilarityMethod = documentSimilarityCalculator.getClass().getDeclaredMethod("calculateCosineSimilarity", Document.class, Document.class);
+        calculateCosineSimilarityMethod.setAccessible(true);
+
+        return (double) calculateCosineSimilarityMethod.invoke(documentSimilarityCalculator, document1, document2);
+    }
+
+    public static double invokeCalculateDotProduct(final DocumentSimilarityCalculator documentSimilarityCalculator, final Document document1, final Document document2) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        final Method calculateDotProductMethod = documentSimilarityCalculator.getClass().getDeclaredMethod("calculateDotProduct", Document.class, Document.class);
+        calculateDotProductMethod.setAccessible(true);
+
+        return (double) calculateDotProductMethod.invoke(documentSimilarityCalculator, document1, document2);
+    }
+
+    public static double invokeCalculateVectorLength(final DocumentSimilarityCalculator documentSimilarityCalculator, final Document document) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        final Method calculateVectorLengthMethod = documentSimilarityCalculator.getClass().getDeclaredMethod("calculateVectorLength", Document.class);
+        calculateVectorLengthMethod.setAccessible(true);
+
+        return (double) calculateVectorLengthMethod.invoke(documentSimilarityCalculator, document);
     }
 }

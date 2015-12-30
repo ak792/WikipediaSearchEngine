@@ -3,73 +3,33 @@ package invertedindex.invertedindex;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Document {
 
     private final int documentId;
 
-    private Map<String, Double> termWeights;
-    private double sumOfSquaredWeights;
-    private double vectorLength;
+    private final Map<String, Set<Integer>> terms;
 
-    public Document(final int documentId, final Map<String, Double> termWeights) {
+    //be careful terms only are here once
+    public Document(final int documentId, final Map<String, Set<Integer>> terms) {
         this.documentId = documentId;
-        setTermWeights(termWeights);
+        this.terms = terms;
     }
 
-    public void setTermWeights(final Map<String, Double> termWeights) {
-        this.termWeights = termWeights;
+    public Document(final int documentId, final List<String> terms) {
+        this.documentId = documentId;
 
-        this.sumOfSquaredWeights = calculateSumOfSquaredWeights(termWeights);
-        this.vectorLength = calculateVectorLength(sumOfSquaredWeights);
-    }
-
-    private double calculateSumOfSquaredWeights(final Map<String, Double> termWeights) {
-        double sumOfSquaredWeights = 0;
-        for (final String term : termWeights.keySet()) {
-            sumOfSquaredWeights += Math.pow(termWeights.get(term), 2);
-        }
-
-        return sumOfSquaredWeights;
-    }
-
-    private double calculateVectorLength(final double sumOfSquaredWeights) {
-        return Math.sqrt(sumOfSquaredWeights);
-    }
-
-    public double calculateSimilarity(final Document otherDoc) {
-        return calculateCosineSimilarity(otherDoc);
-    }
-
-    private double calculateCosineSimilarity(final Document otherDoc) {
-        final double dotProductOfVectors = calculateDotProduct(otherDoc);
-        final double productOfVectorLengths = getVectorLength() * otherDoc.getVectorLength();
-
-        return dotProductOfVectors / productOfVectorLengths;
-    }
-
-    private double calculateDotProduct(final Document otherDoc) {
-        double dotProductOfVectors = 0;
-
-        //if term in this but not in otherDoc --> otherDoc.getTfIdf(term) == 0 --> will add 0
-        //if term in otherDoc but not in this --> getTfIdf(term) == 0 --> will add 0 --> don't need to check
-        for (final String term : termWeights.keySet()) {
-            dotProductOfVectors += getTfIdf(term) * otherDoc.getTfIdf(term);
-        }
-
-        return dotProductOfVectors;
-    }
-
-    public double getTfIdf(final String term) {
-        return termWeights.containsKey(term) ? termWeights.get(term) : 0;
-    }
-
-    public double getVectorLength() {
-        return vectorLength;
+        this.terms = InvertedIndex.getTermsMap(terms);
     }
 
     public int getDocumentId() {
         return documentId;
+    }
+
+    public Map<String, Set<Integer>> getTerms() {
+        //copy?
+        return terms;
     }
 
     @Override
@@ -93,20 +53,13 @@ public class Document {
             return false;
         }
 
-        if (getVectorLength() != otherDocument.getVectorLength()) {
-            return false;
-        }
+        return getTerms().equals(otherDocument.getTerms());
 
-        if (!termWeights.equals(otherDocument.termWeights)) {
-            return false;
-        }
-
-        return true;
     }
 
     @Override
     public String toString() {
-        return "<Document " + documentId + ">: " + termWeights;
+        return "<Document " + documentId + ">: " + terms;
     }
 
 }

@@ -26,8 +26,7 @@ public class InvertedIndex {
     }
 
     private final Dictionary dictionary;
-    private final List<String> documentStrings;
-    private final Map<Document, Map<String, Double>> documents; //map of documents to term weights. maintain termWeights reference that we can change them as new documents are added
+    private final Set<Document> documents;
     private final TermNormalizer termNormalizer;
 
 
@@ -48,8 +47,7 @@ public class InvertedIndex {
                 throw new RuntimeException("DictionaryType " + dictionaryType + " not recognized");
         }
 
-        this.documentStrings = new ArrayList<>();
-        this.documents = new HashMap<>();
+        this.documents = new HashSet<>();
         this.termNormalizer = termNormalizer;
     }
 
@@ -78,36 +76,30 @@ public class InvertedIndex {
                 .build();
     }
 
-    //todo: figure out how to assign the document id rather than passing it in
-    public void add(final int documentId, final String document) {
-        documentStrings.add(document);
-
-        final List<String> terms = getTerms(document);
-        for (int position = 0; position < terms.size(); position++) {
-            final String token = terms.get(position);
-            add(documentId, token, position);
-        }
-
-        final Map<String, Double> termWeights = getTermWeights(documentId, terms);
-
-
-        documents.put(new Document(documentId, termWeights), termWeights);
-
-        //TODO: optimize
-        updateAllDocuments();
+    public Set<Document> getDocuments() {
+        //defensive copy?
+        return documents;
     }
 
-    //TODO: not working
-    //TODO: optimize to take advantage of previously calculated vlaues. can probaly just store tf and calculate idf (and tf * idf) on the fly
-    public void updateAllDocuments() {
-        for (final Map.Entry<Document, Map<String, Double>> entry : documents.entrySet()) {
-            final Document document = entry.getKey();
-            final Map<String, Double> termWeights = entry.getValue();
+    public void add(final Document document) {
+        final int documentId = document.getDocumentId();
+        final Map<String, Set<Integer>> terms = document.getTerms();
+        add(documentId, terms);
+    }
 
-            final Map<String, Double> newTermWeights = getTermWeights(document.getDocumentId(), termWeights.keySet());
-            document.setTermWeights(newTermWeights);
+    //todo: figure out how to assign the document id rather than passing it in
+    public void add(final int documentId, final String document) {
+        final Map<String, Set<Integer>> terms = getTerms(document);
+        add(documentId, terms);
+    }
 
-            documents.put(document, newTermWeights);
+    public void add(final int documentId, final Map<String, Set<Integer>> terms) {
+        documents.add(new Document(documentId, terms));
+
+        for (final String term : terms.keySet()) {
+            for (final int position : terms.get(term)) {
+                add(documentId, term, position);
+            }
         }
     }
 
@@ -121,24 +113,36 @@ public class InvertedIndex {
         postingsList.add(documentId, position);
     }
 
-    private Map<String, Double> getTermWeights(final int documentId, final Collection<String> terms) {
-        final Map<String, Double> termWeights = new HashMap<>();
-
-        for (final String term : terms) {
-            termWeights.put(term, getTfIdf(term, documentId));
-        }
-
-        return termWeights;
-    }
-
-    private List<String> getTerms(final String str) {
+    private Map<String, Set<Integer>> getTerms(final String str) {
         final String[] tokens = tokenize(str);
 
-        return Arrays.stream(tokens)
+        final List<String> termsList = Arrays.stream(tokens)
                      .map(termNormalizer::normalizeTerm)
                      .filter(normalizedToken -> !dictionary.isStopWord(normalizedToken))
-                     .collect(Collectors.toList());
+                     .collect(Collectors.toCollection(ArrayList::new));
+
+        return getTermsMap(termsList);
     }
+
+    public static Map<String, Set<Integer>> getTermsMap(final List<String> termsList) {
+        final Map<String, Set<Integer>> termsMap = new HashMap<>();
+        for (int position = 0; position < termsList.size(); position++) {
+            final String term = termsList.get(position);
+
+            final Set<Integer> positionsInDocument;
+            if (termsMap.containsKey(term)) {
+                positionsInDocument = termsMap.get(term);
+            } else {
+                positionsInDocument = new HashSet<>();
+                termsMap.put(term, positionsInDocument);
+            }
+
+            positionsInDocument.add(position);
+        }
+
+        return termsMap;
+    }
+
 
     private static String[] tokenize(final String str) {
         //split on one or more spaces
@@ -146,8 +150,11 @@ public class InvertedIndex {
         return str.split(" +");
     }
 
-    //WILL CHANGE EVERY TIME A NEW DOCUMENT IS ADDED
     public double getTfIdf(final String term, final int documentId) {
+        if (documentId == 0) {
+            return 1;
+        }
+
         return dictionary.getTermFrequency(term, documentId) * getInverseDocumentFrequency(term);
     }
 
@@ -163,7 +170,7 @@ public class InvertedIndex {
             return 0;
         }
 
-        return Math.log((double) documentStrings.size() / postingsList.getNumDocuments());
+        return Math.log((double) documents.size() / postingsList.getNumDocuments());
     }
 
 
