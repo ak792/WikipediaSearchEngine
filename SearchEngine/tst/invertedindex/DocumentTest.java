@@ -1,58 +1,38 @@
 package invertedindex;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import invertedindex.invertedindex.Document;
+import corpus.Document;
 import org.junit.Assert;
 import org.junit.Test;
-import utils.TestUtils;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class DocumentTest {
 
 
     @Test
     public void test_equals_areEqual() {
-        final Document document1 = new Document(1, ImmutableList.<String>builder()
-                .add("lady")
-                .add("fair")
-                .add("my")
-                .add("pig")
-                .build());
-
-        final Document document2 = new Document(1, ImmutableList.<String>builder()
-                .add("lady")
-                .add("fair")
-                .add("my")
-                .add("pig")
-                .build());
+        final Document document1 = getDocument1();
+        final Document document2 = getDocument1();
 
         Assert.assertEquals(document1, document2);
     }
 
     @Test
     public void test_equals_areNotEqual_differentTerm() {
-
-        final int numDocs = 2;
-
-        final Document document1 = new Document(1, ImmutableList.<String>builder()
-                .add("lady")
-                .add("fair")
-                .add("my")
-                .add("pig")
-                .build());
-
-        final Document document2 = new Document(1, ImmutableList.<String>builder()
-                .add("f")
-                .add("fair")
-                .add("my")
-                .add("pig")
-                .build());
+        final Document document1 = getDocument1();
+        final Document document2 = getDocument1DifferentWords();
 
         Assert.assertNotEquals(document1, document2);
     }
+
+    public Document getDocument1() {
+        return new Document(1, Arrays.asList("lady", "fair", "my", "pig"));
+    }
+
+    public Document getDocument1DifferentWords() {
+        return new Document(1, Arrays.asList("f", "fair", "my", "pig"));
+    }
+
 
 }

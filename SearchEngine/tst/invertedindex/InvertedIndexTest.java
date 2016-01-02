@@ -3,7 +3,7 @@ package invertedindex;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import invertedindex.dictionary.Dictionary;
-import invertedindex.invertedindex.Document;
+import corpus.Document;
 import invertedindex.invertedindex.InvertedIndex;
 import invertedindex.postingslist.DynamicArrayPositionalPostingsList;
 import invertedindex.postingslist.PostingsList;

@@ -1,7 +1,6 @@
 package querier.similarity;
 
-import com.sun.javadoc.Doc;
-import invertedindex.invertedindex.Document;
+import corpus.Document;
 import invertedindex.invertedindex.InvertedIndex;
 
 public class DocumentSimilarityCalculator {

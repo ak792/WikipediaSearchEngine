@@ -1,6 +1,7 @@
-package invertedindex.invertedindex;
+package corpus;
 
-import java.util.HashMap;
+import invertedindex.invertedindex.InvertedIndex;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -8,19 +9,15 @@ import java.util.Set;
 public class Document {
 
     private final int documentId;
-
     private final Map<String, Set<Integer>> terms;
 
-    //be careful terms only are here once
+    public Document(final int documentId, final List<String> terms) {
+        this(documentId, InvertedIndex.createTermsMap(terms));
+    }
+
     public Document(final int documentId, final Map<String, Set<Integer>> terms) {
         this.documentId = documentId;
         this.terms = terms;
-    }
-
-    public Document(final int documentId, final List<String> terms) {
-        this.documentId = documentId;
-
-        this.terms = InvertedIndex.getTermsMap(terms);
     }
 
     public int getDocumentId() {
@@ -49,17 +46,14 @@ public class Document {
 
         final Document otherDocument = (Document) object;
 
-        if (getDocumentId() != otherDocument.getDocumentId()) {
-            return false;
-        }
-
-        return getTerms().equals(otherDocument.getTerms());
+        return getDocumentId() == otherDocument.getDocumentId() &&
+                getTerms().equals(otherDocument.getTerms());
 
     }
 
     @Override
     public String toString() {
-        return "<Document " + documentId + ">: " + terms;
+        return "<Document " + documentId + ">";
     }
 
 }

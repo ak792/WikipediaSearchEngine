@@ -1,7 +1,7 @@
 package querier;
 
 import com.google.common.collect.ImmutableList;
-import invertedindex.invertedindex.Document;
+import corpus.Document;
 import invertedindex.invertedindex.InvertedIndex;
 import org.junit.Assert;
 import org.junit.Test;

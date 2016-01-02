@@ -3,14 +3,13 @@ package utils;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import invertedindex.dictionary.Dictionary;
-import invertedindex.invertedindex.Document;
+import corpus.Document;
 import invertedindex.invertedindex.InvertedIndex;
 import querier.similarity.DocumentSimilarityCalculator;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.Set;
 
 public class TestUtils {

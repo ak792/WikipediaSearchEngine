@@ -3,12 +3,12 @@ package invertedindex.invertedindex;
 import com.google.common.collect.ImmutableSet;
 import invertedindex.dictionary.Dictionary;
 import invertedindex.dictionary.HashDictionary;
+import corpus.Document;
 import invertedindex.postingslist.PostingsList;
 import invertedindex.postingslist.PostingsListFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -121,10 +121,10 @@ public class InvertedIndex {
                      .filter(normalizedToken -> !dictionary.isStopWord(normalizedToken))
                      .collect(Collectors.toCollection(ArrayList::new));
 
-        return getTermsMap(termsList);
+        return createTermsMap(termsList);
     }
 
-    public static Map<String, Set<Integer>> getTermsMap(final List<String> termsList) {
+    public static Map<String, Set<Integer>> createTermsMap(final List<String> termsList) {
         final Map<String, Set<Integer>> termsMap = new HashMap<>();
         for (int position = 0; position < termsList.size(); position++) {
             final String term = termsList.get(position);

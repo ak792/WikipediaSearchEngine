@@ -1,15 +1,13 @@
 package querier;
 
 
-import invertedindex.invertedindex.Document;
+import corpus.Document;
 import invertedindex.invertedindex.InvertedIndex;
 import org.apache.lucene.util.PriorityQueue;
 import querier.similarity.DocumentSimilarityCalculator;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 public class Querier {
 
